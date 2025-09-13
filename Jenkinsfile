@@ -2,9 +2,10 @@ pipeline {
   agent any
 
   environment {
-    SF_USERNAME = credentials('SF_USERNAME')   // Jenkins credential ID
-    SF_CLIENT_ID = credentials('SF_CLIENT_ID')
-    SF_JWT_KEY = credentials('SF_JWT_KEY')     // secret file credential
+    # Salesforce auth details (stored in Jenkins Credentials)
+    SF_USERNAME   = credentials('SF_USERNAME')
+    SF_CLIENT_ID  = credentials('SF_CLIENT_ID')
+    SF_JWT_KEY    = credentials('SF_JWT_KEY')   // secret file credential
   }
 
   stages {
@@ -14,13 +15,9 @@ pipeline {
       }
     }
 
-    stage('Auth Salesforce') {
+    stage('Authenticate Salesforce') {
       steps {
-        withCredentials([
-        file(credentialsId: 'sf-server-key', variable: 'SF_SERVER_KEY_FILE'),
-        string(credentialsId: 'sf-consumer-key', variable: 'SF_CONSUMER_KEY'),
-        string(credentialsId: 'sf-username', variable: 'SF_USERNAME')
-      ]) {
+        withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
             sfdx auth:jwt:grant \
@@ -36,7 +33,7 @@ pipeline {
     stage('Validate Deployment') {
       steps {
         sh '''
-          echo "Running SFDX validation..."
+          echo "Running validation deploy..."
           sfdx force:source:deploy \
             -p force-app/main/default \
             -u $SF_USERNAME \
@@ -50,21 +47,11 @@ pipeline {
 
   post {
     success {
-      echo "Validation passed ✅"
+      echo "✅ Validation successful"
     }
     failure {
-      emailext(
-        subject: "Jenkins Build Failed: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-        body: """Build failed.
-
-Job: ${env.JOB_NAME}
-Build: ${env.BUILD_NUMBER}
-PR: ${env.ghprbPullId}
-
-Check console: ${env.BUILD_URL}console
-""",
-        to: "dev-team@example.com"
-      )
+      echo "❌ Validation failed"
+      error("Stopping pipeline due to validation failure")
     }
   }
 }
