@@ -10,13 +10,14 @@ pipeline {
     stage('Checkout') {
       steps {
         checkout scm
-        githubNotify context: 'jenkins/sfdx-validation', status: 'PENDING', description: 'Checkout in progress'
       }
     }
 
     stage('Authenticate Salesforce') {
       steps {
-        githubNotify context: 'jenkins/sfdx-validation', status: 'PENDING', description: 'Authenticating Salesforce'
+        setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
+                                   status: 'PENDING',
+                                   message: 'Authenticating to Salesforce...'
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
@@ -33,7 +34,9 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
-        githubNotify context: 'jenkins/sfdx-validation', status: 'PENDING', description: 'Running validation deploy'
+        setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
+                                   status: 'PENDING',
+                                   message: 'Running validation deployment...'
         sh '''
           echo "Running validation deploy..."
           sf project deploy start \
@@ -47,10 +50,14 @@ pipeline {
 
   post {
     success {
-      githubNotify context: 'jenkins/sfdx-validation', status: 'SUCCESS', description: '✅ Validation successful'
+      setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
+                                 status: 'SUCCESS',
+                                 message: '✅ Validation successful'
     }
     failure {
-      githubNotify context: 'jenkins/sfdx-validation', status: 'FAILURE', description: '❌ Validation failed'
+      setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
+                                 status: 'FAILURE',
+                                 message: '❌ Validation failed'
     }
   }
 }
