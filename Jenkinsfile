@@ -36,7 +36,6 @@ pipeline {
           sf project deploy start \
             --source-dir force-app/main/default \
             --target-org $SF_USERNAME \
-            --dry-run \
             --wait 20
         '''
       }
