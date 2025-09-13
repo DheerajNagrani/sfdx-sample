@@ -15,9 +15,12 @@ pipeline {
 
     stage('Authenticate Salesforce') {
       steps {
-        publishChecks name: 'Jenkins SFDX Validation',
-                      status: 'IN_PROGRESS',
-                      summary: 'Authenticating to Salesforce...'
+        step([$class: 'GitHubCommitStatusSetter',
+              contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+              statusResultSource: [$class: 'ConditionalStatusResultSource',
+                results: [[state: 'PENDING', message: 'Authenticating to Salesforce...']]
+              ]
+        ])
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
@@ -34,9 +37,12 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
-        publishChecks name: 'Jenkins SFDX Validation',
-                      status: 'IN_PROGRESS',
-                      summary: 'Running validation deployment...'
+        step([$class: 'GitHubCommitStatusSetter',
+              contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+              statusResultSource: [$class: 'ConditionalStatusResultSource',
+                results: [[state: 'PENDING', message: 'Running validation deployment...']]
+              ]
+        ])
         sh '''
           echo "Running validation deploy..."
           sf project deploy start \
@@ -50,16 +56,20 @@ pipeline {
 
   post {
     success {
-      publishChecks name: 'Jenkins SFDX Validation',
-                    status: 'COMPLETED',
-                    conclusion: 'SUCCESS',
-                    summary: '✅ Validation successful'
+      step([$class: 'GitHubCommitStatusSetter',
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+            statusResultSource: [$class: 'ConditionalStatusResultSource',
+              results: [[state: 'SUCCESS', message: '✅ Validation successful']]
+            ]
+      ])
     }
     failure {
-      publishChecks name: 'Jenkins SFDX Validation',
-                    status: 'COMPLETED',
-                    conclusion: 'FAILURE',
-                    summary: '❌ Validation failed'
+      step([$class: 'GitHubCommitStatusSetter',
+            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+            statusResultSource: [$class: 'ConditionalStatusResultSource',
+              results: [[state: 'FAILURE', message: '❌ Validation failed']]
+            ]
+      ])
     }
   }
 }
