@@ -6,20 +6,20 @@ pipeline {
     SF_CLIENT_ID = credentials('SF_CLIENT_ID')
   }
 
-  options {
-    timestamps()
-  }
-
   stages {
     stage('Checkout') {
       steps {
         checkout scm
-        githubNotify context: 'Jenkins SFDX Validation', status: 'PENDING', description: 'Build started'
       }
     }
 
     stage('Authenticate Salesforce') {
       steps {
+        script {
+          setGitHubPullRequestStatus state: 'PENDING',
+                                     context: 'Jenkins SFDX Validation',
+                                     message: 'Authenticating to Salesforce...'
+        }
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
@@ -36,6 +36,11 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
+        script {
+          setGitHubPullRequestStatus state: 'PENDING',
+                                     context: 'Jenkins SFDX Validation',
+                                     message: 'Running validation deployment...'
+        }
         sh '''
           echo "Running validation deploy..."
           sf project deploy start \
@@ -49,11 +54,19 @@ pipeline {
 
   post {
     success {
-      githubNotify context: 'Jenkins SFDX Validation', status: 'SUCCESS', description: 'Validation successful'
+      script {
+        setGitHubPullRequestStatus state: 'SUCCESS',
+                                   context: 'Jenkins SFDX Validation',
+                                   message: '✅ Validation successful'
+      }
       echo "✅ Validation successful"
     }
     failure {
-      githubNotify context: 'Jenkins SFDX Validation', status: 'FAILURE', description: 'Validation failed'
+      script {
+        setGitHubPullRequestStatus state: 'FAILURE',
+                                   context: 'Jenkins SFDX Validation',
+                                   message: '❌ Validation failed'
+      }
       echo "❌ Validation failed"
       error("Stopping pipeline due to validation failure")
     }
