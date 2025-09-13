@@ -37,7 +37,6 @@ pipeline {
             --source-dir force-app/main/default \
             --target-org $SF_USERNAME \
             --dry-run \
-            --test-level RunLocalTests \
             --wait 20
         '''
       }
