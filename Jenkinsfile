@@ -16,7 +16,7 @@ pipeline {
     stage('Authenticate Salesforce') {
       steps {
         setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
-                                   status: 'PENDING',
+                                   state: 'PENDING',
                                    message: 'Authenticating to Salesforce...'
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
@@ -35,7 +35,7 @@ pipeline {
     stage('Validate Deployment') {
       steps {
         setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
-                                   status: 'PENDING',
+                                   state: 'PENDING',
                                    message: 'Running validation deployment...'
         sh '''
           echo "Running validation deploy..."
@@ -51,12 +51,12 @@ pipeline {
   post {
     success {
       setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
-                                 status: 'SUCCESS',
+                                 state: 'SUCCESS',
                                  message: '✅ Validation successful'
     }
     failure {
       setGitHubPullRequestStatus context: 'Jenkins SFDX Validation',
-                                 status: 'FAILURE',
+                                 state: 'FAILURE',
                                  message: '❌ Validation failed'
     }
   }
