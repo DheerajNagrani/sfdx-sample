@@ -17,7 +17,11 @@ pipeline {
 
     stage('Authenticate Salesforce') {
       steps {
-        withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
+        withCredentials([
+        file(credentialsId: 'sf-server-key', variable: 'SF_SERVER_KEY_FILE'),
+        string(credentialsId: 'sf-consumer-key', variable: 'SF_CONSUMER_KEY'),
+        string(credentialsId: 'sf-username', variable: 'SF_USERNAME')
+      ]) {
           sh '''
             echo "Authenticating to Salesforce..."
             sfdx auth:jwt:grant \
