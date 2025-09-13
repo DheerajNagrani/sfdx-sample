@@ -9,12 +9,18 @@ pipeline {
   stages {
     stage('Checkout') {
       steps {
+        script {
+          githubNotify context: 'Jenkins Build', status: 'PENDING', description: 'Checking out code'
+        }
         checkout scm
       }
     }
 
     stage('Authenticate Salesforce') {
       steps {
+        script {
+          githubNotify context: 'Jenkins Build', status: 'PENDING', description: 'Authenticating Salesforce'
+        }
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
@@ -31,6 +37,9 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
+        script {
+          githubNotify context: 'Jenkins Build', status: 'PENDING', description: 'Running validation deploy'
+        }
         sh '''
           echo "Running validation deploy..."
           sf project deploy start \
@@ -44,9 +53,15 @@ pipeline {
 
   post {
     success {
+      script {
+        githubNotify context: 'Jenkins Build', status: 'SUCCESS', description: 'Validation successful'
+      }
       echo "✅ Validation successful"
     }
     failure {
+      script {
+        githubNotify context: 'Jenkins Build', status: 'FAILURE', description: 'Validation failed'
+      }
       echo "❌ Validation failed"
       error("Stopping pipeline due to validation failure")
     }
