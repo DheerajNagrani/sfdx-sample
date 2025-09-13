@@ -15,6 +15,7 @@ pipeline {
 
     stage('Authenticate Salesforce') {
       steps {
+        // mark commit as pending
         step([
           $class: 'GitHubCommitStatusSetter',
           contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
@@ -23,10 +24,11 @@ pipeline {
             results: [[
               $class: 'AnyBuildResult',
               state: 'PENDING',
-              message: 'Authenticating to Salesforce...'
+              message: "Authenticating to Salesforce for PR #${env.ghprbPullId}..."
             ]]
           ]
         ])
+
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
@@ -43,18 +45,6 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
-        step([
-          $class: 'GitHubCommitStatusSetter',
-          contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-          statusResultSource: [
-            $class: 'ConditionalStatusResultSource',
-            results: [[
-              $class: 'AnyBuildResult',
-              state: 'PENDING',
-              message: 'Running validation deployment...'
-            ]]
-          ]
-        ])
         sh '''
           echo "Running validation deploy..."
           sf project deploy start \
@@ -76,7 +66,7 @@ pipeline {
           results: [[
             $class: 'AnyBuildResult',
             state: 'SUCCESS',
-            message: '✅ Validation successful'
+            message: "✅ Validation successful for PR #${env.ghprbPullId}"
           ]]
         ]
       ])
@@ -90,7 +80,7 @@ pipeline {
           results: [[
             $class: 'AnyBuildResult',
             state: 'FAILURE',
-            message: '❌ Validation failed'
+            message: "❌ Validation failed for PR #${env.ghprbPullId}"
           ]]
         ]
       ])
