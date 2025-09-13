@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    # Salesforce auth details (stored in Jenkins Credentials)
+
     SF_USERNAME   = credentials('SF_USERNAME')
     SF_CLIENT_ID  = credentials('SF_CLIENT_ID')
     SF_JWT_KEY    = credentials('SF_JWT_KEY')   // secret file credential
