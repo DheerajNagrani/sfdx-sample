@@ -7,14 +7,14 @@ pipeline {
   }
 
   options {
-    // Publishes results as GitHub Checks (requires Checks API plugin)
-    publishChecks()
+    timestamps()
   }
 
   stages {
     stage('Checkout') {
       steps {
         checkout scm
+        githubNotify context: 'Jenkins SFDX Validation', status: 'PENDING', description: 'Build started'
       }
     }
 
@@ -49,17 +49,12 @@ pipeline {
 
   post {
     success {
+      githubNotify context: 'Jenkins SFDX Validation', status: 'SUCCESS', description: 'Validation successful'
       echo "✅ Validation successful"
-      // Send success status to GitHub
-      githubNotify context: 'Jenkins SFDX Validation',
-                   description: 'Salesforce validation passed',
-                   status: 'SUCCESS'
     }
     failure {
+      githubNotify context: 'Jenkins SFDX Validation', status: 'FAILURE', description: 'Validation failed'
       echo "❌ Validation failed"
-      githubNotify context: 'Jenkins SFDX Validation',
-                   description: 'Salesforce validation failed',
-                   status: 'FAILURE'
       error("Stopping pipeline due to validation failure")
     }
   }
