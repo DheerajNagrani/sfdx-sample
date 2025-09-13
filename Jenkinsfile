@@ -34,9 +34,7 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
-        publishChecks name: 'Jenkins SFDX Validation',
-                      status: 'IN_PROGRESS',
-                      summary: 'Running validation deployment...'
+        githubNotify context: 'jenkins/validation', status: 'PENDING'
         sh '''
           echo "Running validation deploy..."
           sf project deploy start \
@@ -50,16 +48,10 @@ pipeline {
 
   post {
     success {
-      publishChecks name: 'Jenkins SFDX Validation',
-                    status: 'COMPLETED',
-                    conclusion: 'SUCCESS',
-                    summary: '✅ Validation successful'
+      githubNotify context: 'jenkins/validation', status: 'SUCCESS'
     }
     failure {
-      publishChecks name: 'Jenkins SFDX Validation',
-                    status: 'COMPLETED',
-                    conclusion: 'FAILURE',
-                    summary: '❌ Validation failed'
+      githubNotify context: 'jenkins/validation', status: 'FAILURE'
     }
   }
 }
