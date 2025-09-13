@@ -6,6 +6,11 @@ pipeline {
     SF_CLIENT_ID = credentials('SF_CLIENT_ID')
   }
 
+  options {
+    // Publishes results as GitHub Checks (requires Checks API plugin)
+    publishChecks()
+  }
+
   stages {
     stage('Checkout') {
       steps {
@@ -45,9 +50,16 @@ pipeline {
   post {
     success {
       echo "✅ Validation successful"
+      // Send success status to GitHub
+      githubNotify context: 'Jenkins SFDX Validation',
+                   description: 'Salesforce validation passed',
+                   status: 'SUCCESS'
     }
     failure {
       echo "❌ Validation failed"
+      githubNotify context: 'Jenkins SFDX Validation',
+                   description: 'Salesforce validation failed',
+                   status: 'FAILURE'
       error("Stopping pipeline due to validation failure")
     }
   }
