@@ -15,11 +15,9 @@ pipeline {
 
     stage('Authenticate Salesforce') {
       steps {
-        script {
-          setGitHubPullRequestStatus state: 'PENDING',
-                                     context: 'Jenkins SFDX Validation',
-                                     message: 'Authenticating to Salesforce...'
-        }
+        publishChecks name: 'Jenkins SFDX Validation',
+                      status: 'IN_PROGRESS',
+                      summary: 'Authenticating to Salesforce...'
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
@@ -36,11 +34,9 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
-        script {
-          setGitHubPullRequestStatus state: 'PENDING',
-                                     context: 'Jenkins SFDX Validation',
-                                     message: 'Running validation deployment...'
-        }
+        publishChecks name: 'Jenkins SFDX Validation',
+                      status: 'IN_PROGRESS',
+                      summary: 'Running validation deployment...'
         sh '''
           echo "Running validation deploy..."
           sf project deploy start \
@@ -54,21 +50,16 @@ pipeline {
 
   post {
     success {
-      script {
-        setGitHubPullRequestStatus state: 'SUCCESS',
-                                   context: 'Jenkins SFDX Validation',
-                                   message: '✅ Validation successful'
-      }
-      echo "✅ Validation successful"
+      publishChecks name: 'Jenkins SFDX Validation',
+                    status: 'COMPLETED',
+                    conclusion: 'SUCCESS',
+                    summary: '✅ Validation successful'
     }
     failure {
-      script {
-        setGitHubPullRequestStatus state: 'FAILURE',
-                                   context: 'Jenkins SFDX Validation',
-                                   message: '❌ Validation failed'
-      }
-      echo "❌ Validation failed"
-      error("Stopping pipeline due to validation failure")
+      publishChecks name: 'Jenkins SFDX Validation',
+                    status: 'COMPLETED',
+                    conclusion: 'FAILURE',
+                    summary: '❌ Validation failed'
     }
   }
 }
