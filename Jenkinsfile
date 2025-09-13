@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    
+    # Salesforce auth details (stored in Jenkins Credentials)
     SF_USERNAME   = credentials('SF_USERNAME')
     SF_CLIENT_ID  = credentials('SF_CLIENT_ID')
     SF_JWT_KEY    = credentials('SF_JWT_KEY')   // secret file credential
@@ -17,11 +17,7 @@ pipeline {
 
     stage('Authenticate Salesforce') {
       steps {
-        withCredentials([
-        file(credentialsId: 'sf-server-key', variable: 'SF_SERVER_KEY_FILE'),
-        string(credentialsId: 'sf-consumer-key', variable: 'SF_CONSUMER_KEY'),
-        string(credentialsId: 'sf-username', variable: 'SF_USERNAME')
-      ]) {
+        withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
             sfdx auth:jwt:grant \
