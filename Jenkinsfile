@@ -2,10 +2,8 @@ pipeline {
   agent any
 
   environment {
-
-    SF_USERNAME   = credentials('SF_USERNAME')
-    SF_CLIENT_ID  = credentials('SF_CLIENT_ID')
-    SF_JWT_KEY    = credentials('SF_JWT_KEY')   // secret file credential
+    SF_USERNAME  = credentials('SF_USERNAME')
+    SF_CLIENT_ID = credentials('SF_CLIENT_ID')
   }
 
   stages {
@@ -20,11 +18,12 @@ pipeline {
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
             echo "Authenticating to Salesforce..."
-            sfdx auth:jwt:grant \
-              --clientid $SF_CLIENT_ID \
-              --jwtkeyfile $JWT_KEY_FILE \
+            sf org login jwt \
+              --client-id $SF_CLIENT_ID \
+              --jwt-key-file $JWT_KEY_FILE \
               --username $SF_USERNAME \
-              --instanceurl https://test.salesforce.com
+              --instance-url https://test.salesforce.com \
+              --alias myOrg
           '''
         }
       }
@@ -34,24 +33,9 @@ pipeline {
       steps {
         sh '''
           echo "Running validation deploy..."
-          sfdx force:source:deploy \
-            -p force-app/main/default \
-            -u $SF_USERNAME \
-            --checkonly \
-            --testlevel RunLocalTests \
-            --wait 20
-        '''
-      }
-    }
-  }
-
-  post {
-    success {
-      echo "✅ Validation successful"
-    }
-    failure {
-      echo "❌ Validation failed"
-      error("Stopping pipeline due to validation failure")
-    }
-  }
-}
+          sf project deploy start \
+            --source-dir force-app/main/default \
+            --target-org $SF_USERNAME \
+            --dry-run \
+            --test-level RunLocalTests \
+            --wait 2
