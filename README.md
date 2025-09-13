@@ -1,18 +1,21 @@
-# Salesforce DX Project: Next Steps
+# SFDX Sample Project
 
-Now that you’ve created a Salesforce DX project, what’s next? Here are some documentation resources to get you started.
+This repository contains a Salesforce DX project with an example Apex class and trigger.
 
-## How Do You Plan to Deploy Your Changes?
+## Branching Strategy
+- `main`: Production-ready code. Protected, requires PR reviews & passing Jenkins build.
+- `develop`: Active development branch.
 
-Do you want to deploy a set of changes, or create a self-contained application? Choose a [development model](https://developer.salesforce.com/tools/vscode/en/user-guide/development-models).
+## Permissions
+- Read-only: User A
+- Write access: User B
 
-## Configure Your Salesforce DX Project
+## CI/CD
+- Jenkins job runs on every PR to `main`.
+- Status check (`jenkins/ci`) must pass before merging.
 
-The `sfdx-project.json` file contains useful configuration information for your project. See [Salesforce DX Project Configuration](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_ws_config.htm) in the _Salesforce DX Developer Guide_ for details about this file.
-
-## Read All About It
-
-- [Salesforce Extensions Documentation](https://developer.salesforce.com/tools/vscode/)
-- [Salesforce CLI Setup Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_setup.meta/sfdx_setup/sfdx_setup_intro.htm)
-- [Salesforce DX Developer Guide](https://developer.salesforce.com/docs/atlas.en-us.sfdx_dev.meta/sfdx_dev/sfdx_dev_intro.htm)
-- [Salesforce CLI Command Reference](https://developer.salesforce.com/docs/atlas.en-us.sfdx_cli_reference.meta/sfdx_cli_reference/cli_reference.htm)
+## Notes
+- Use `sfdx force:source:pull` and `sfdx force:source:push` carefully to avoid metadata conflicts.
+- Resolve conflicts by running:
+  ```bash
+  sfdx force:source:status
