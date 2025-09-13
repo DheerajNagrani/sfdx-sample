@@ -38,4 +38,19 @@ pipeline {
             --target-org $SF_USERNAME \
             --dry-run \
             --test-level RunLocalTests \
-            --wait 2
+            --wait 20
+        '''
+      }
+    }
+  }
+
+  post {
+    success {
+      echo "✅ Validation successful"
+    }
+    failure {
+      echo "❌ Validation failed"
+      error("Stopping pipeline due to validation failure")
+    }
+  }
+}
