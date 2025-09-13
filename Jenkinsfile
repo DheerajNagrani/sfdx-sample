@@ -15,11 +15,17 @@ pipeline {
 
     stage('Authenticate Salesforce') {
       steps {
-        step([$class: 'GitHubCommitStatusSetter',
-              contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-              statusResultSource: [$class: 'ConditionalStatusResultSource',
-                results: [[state: 'PENDING', message: 'Authenticating to Salesforce...']]
-              ]
+        step([
+          $class: 'GitHubCommitStatusSetter',
+          contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+          statusResultSource: [
+            $class: 'ConditionalStatusResultSource',
+            results: [[
+              $class: 'AnyBuildResult',
+              state: 'PENDING',
+              message: 'Authenticating to Salesforce...'
+            ]]
+          ]
         ])
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
@@ -37,11 +43,17 @@ pipeline {
 
     stage('Validate Deployment') {
       steps {
-        step([$class: 'GitHubCommitStatusSetter',
-              contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-              statusResultSource: [$class: 'ConditionalStatusResultSource',
-                results: [[state: 'PENDING', message: 'Running validation deployment...']]
-              ]
+        step([
+          $class: 'GitHubCommitStatusSetter',
+          contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+          statusResultSource: [
+            $class: 'ConditionalStatusResultSource',
+            results: [[
+              $class: 'AnyBuildResult',
+              state: 'PENDING',
+              message: 'Running validation deployment...'
+            ]]
+          ]
         ])
         sh '''
           echo "Running validation deploy..."
@@ -56,19 +68,31 @@ pipeline {
 
   post {
     success {
-      step([$class: 'GitHubCommitStatusSetter',
-            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-            statusResultSource: [$class: 'ConditionalStatusResultSource',
-              results: [[state: 'SUCCESS', message: '✅ Validation successful']]
-            ]
+      step([
+        $class: 'GitHubCommitStatusSetter',
+        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+        statusResultSource: [
+          $class: 'ConditionalStatusResultSource',
+          results: [[
+            $class: 'AnyBuildResult',
+            state: 'SUCCESS',
+            message: '✅ Validation successful'
+          ]]
+        ]
       ])
     }
     failure {
-      step([$class: 'GitHubCommitStatusSetter',
-            contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-            statusResultSource: [$class: 'ConditionalStatusResultSource',
-              results: [[state: 'FAILURE', message: '❌ Validation failed']]
-            ]
+      step([
+        $class: 'GitHubCommitStatusSetter',
+        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+        statusResultSource: [
+          $class: 'ConditionalStatusResultSource',
+          results: [[
+            $class: 'AnyBuildResult',
+            state: 'FAILURE',
+            message: '❌ Validation failed'
+          ]]
+        ]
       ])
     }
   }
