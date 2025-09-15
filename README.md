@@ -19,3 +19,19 @@ This repository contains a Salesforce DX project with an example Apex class and 
 - Resolve conflicts by running:
   ```bash
   sfdx force:source:status
+
+  ## Static Code Analysis with PMD
+
+This project uses [PMD](https://pmd.github.io/) to analyze Apex classes.
+
+### GitHub Actions
+- Workflow file: `.github/workflows/pmd.yml`
+- Runs on:
+  - Pull requests targeting `develop`
+  - Pushes to `develop`
+- Generates a `pmd-report.html` file as an artifact.
+
+### Jenkins
+- Jenkinsfile runs PMD as part of the pipeline.
+- The PMD report is archived in Jenkins and viewable in the job’s **PMD Analysis Report** section.
+
