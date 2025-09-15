@@ -73,9 +73,8 @@ pipeline {
           "❌ Deployment failed for branch ${env.BRANCH_NAME}"
         echo msg
         emailext(
-          subject: "Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
-          body: """<p>${msg}</p>
-                   <p>See details: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
+          subject: "Jenkins Build FAILED:  #${env.BUILD_NUMBER}",
+          body: "Your Jenkins Build Failed. Please check the logs in your dashboard.",
           to: "dheeraj.pvas@gmail.com"
         )
       }
