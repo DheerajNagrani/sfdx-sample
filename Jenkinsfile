@@ -1,11 +1,6 @@
 pipeline {
   agent any
 
-  triggers {
-    // Trigger on GitHub push and PR events
-    githubPush()
-  }
-
   environment {
     SF_USERNAME  = credentials('SF_USERNAME')
     SF_CLIENT_ID = credentials('SF_CLIENT_ID')
@@ -37,7 +32,7 @@ pipeline {
     stage('Validate or Deploy') {
       steps {
         script {
-          if (env.CHANGE_ID && (env.CHANGE_TARGET == 'main' || env.CHANGE_TARGET == 'develop')) {
+          if (env.CHANGE_ID) {
             echo "Running validation for PR #${env.CHANGE_ID} targeting ${env.CHANGE_TARGET}"
             sh '''
               sf project deploy validate \
@@ -45,8 +40,8 @@ pipeline {
                 --target-org $SF_USERNAME \
                 --wait 20
             '''
-          } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'develop') {
-            echo "Running full deploy for branch ${env.BRANCH_NAME}"
+          } else if (env.BRANCH_NAME == 'main') {
+            echo "Running full deploy for main branch"
             sh '''
               sf project deploy start \
                 --source-dir force-app/main/default \
@@ -54,34 +49,9 @@ pipeline {
                 --wait 20
             '''
           } else {
-            echo "Skipping deploy: not a PR to main/develop or direct run on other branches."
+            echo "Skipping deploy: not a PR or main branch."
           }
         }
-      }
-    }
-
-    stage('Run PMD') {
-      steps {
-        sh '''
-          echo "Downloading and running PMD..."
-          curl -L -o pmd-bin.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip
-          unzip -o pmd-bin.zip
-          ./pmd-bin-6.55.0/bin/run.sh pmd \
-            -d force-app/main/default/classes \
-            -R category/apex/design.xml \
-            -f html \
-            -r pmd-report.html
-        '''
-        // Save PMD report as an artifact
-        archiveArtifacts artifacts: 'pmd-report.html', fingerprint: true
-        // Publish report in Jenkins UI
-        publishHTML(target: [
-          allowMissing: true,
-          keepAll: true,
-          reportDir: '.',
-          reportFiles: 'pmd-report.html',
-          reportName: 'PMD Analysis Report'
-        ])
       }
     }
   }
@@ -97,18 +67,18 @@ pipeline {
       }
     }
     failure {
-      script {
-        def msg = env.CHANGE_ID ?
-          "❌ Validation failed for PR #${env.CHANGE_ID}" :
-          "❌ Deployment failed for branch ${env.BRANCH_NAME}"
-        echo msg
-        emailext(
-          subject: "Jenkins Build FAILED: #${env.BUILD_NUMBER}",
-          body: """<p>${msg}</p>
-                   <p>Check logs in your dashboard.</p>""",
-          to: "dheeraj.pvas@gmail.com"
-        )
-      }
-    }
+  script {
+    def msg = 
+      "❌ Validation failed for PR #${env.CHANGE_ID}" 
+      
+    echo msg
+    emailext(
+      subject: "Jenkins Build FAILED: #${env.BUILD_NUMBER}",
+      body: """<p>${msg}</p>
+               <p>Check logs in your dashboard.</p>""",
+      to: "dheeraj.pvas@gmail.com"
+    )
+  }
+}
   }
 }
