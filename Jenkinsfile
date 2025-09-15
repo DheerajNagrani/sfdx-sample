@@ -6,32 +6,30 @@ pipeline {
     SF_CLIENT_ID = credentials('SF_CLIENT_ID')
   }
 
+  triggers {
+    // only run on main branch
+    pollSCM('')
+  }
+
   stages {
     stage('Checkout') {
+      when {
+        branch 'main'
+      }
       steps {
         checkout scm
       }
     }
 
     stage('Authenticate Salesforce') {
+      when {
+        branch 'main'
+      }
       steps {
-        // mark commit as pending
-        step([
-          $class: 'GitHubCommitStatusSetter',
-          contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-          statusResultSource: [
-            $class: 'ConditionalStatusResultSource',
-            results: [[
-              $class: 'AnyBuildResult',
-              state: 'PENDING',
-              message: "Authenticating to Salesforce for PR #${env.ghprbPullId}..."
-            ]]
-          ]
-        ])
+        echo "Authenticating to Salesforce..."
 
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
-            echo "Authenticating to Salesforce..."
             sf org login jwt \
               --client-id $SF_CLIENT_ID \
               --jwt-key-file $JWT_KEY_FILE \
@@ -44,46 +42,3 @@ pipeline {
     }
 
     stage('Validate Deployment') {
-      steps {
-        sh '''
-          echo "Running validation deploy..."
-          sf project deploy start \
-            --source-dir force-app/main/default \
-            --target-org $SF_USERNAME \
-            --wait 20
-        '''
-      }
-    }
-  }
-
-  post {
-    success {
-      step([
-        $class: 'GitHubCommitStatusSetter',
-        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-        statusResultSource: [
-          $class: 'ConditionalStatusResultSource',
-          results: [[
-            $class: 'AnyBuildResult',
-            state: 'SUCCESS',
-            message: "✅ Validation successful for PR #${env.ghprbPullId}"
-          ]]
-        ]
-      ])
-    }
-    failure {
-      step([
-        $class: 'GitHubCommitStatusSetter',
-        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-        statusResultSource: [
-          $class: 'ConditionalStatusResultSource',
-          results: [[
-            $class: 'AnyBuildResult',
-            state: 'FAILURE',
-            message: "❌ Validation failed for PR #${env.ghprbPullId}"
-          ]]
-        ]
-      ])
-    }
-  }
-}
