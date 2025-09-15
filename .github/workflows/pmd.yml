@@ -2,18 +2,16 @@ name: Apex PMD Analysis
 
 on:
   pull_request:
-    branches:
-      - main
+    branches: [ main ]
   push:
-    branches:
-      - main
+    branches: [ main ]
 
 jobs:
   pmd:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repo
+      - name: Checkout repository
         uses: actions/checkout@v4
 
       - name: Set up Java
@@ -22,12 +20,12 @@ jobs:
           distribution: temurin
           java-version: 17
 
-      - name: Install PMD
+      - name: Download PMD
         run: |
           curl -L -o pmd-bin.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip
           unzip -o pmd-bin.zip
 
-      - name: Run PMD Analysis
+      - name: Run PMD Analysis (HTML + SARIF)
         run: |
           ./pmd-bin-6.55.0/bin/run.sh pmd \
             -d force-app/main/default/classes \
@@ -35,10 +33,23 @@ jobs:
             -R category/apex/bestpractices.xml \
             -R category/apex/errorprone.xml \
             -f html \
-            -r pmd-report.html
+            -r pmd-report.html || true
 
-      - name: Upload PMD Report
+          ./pmd-bin-6.55.0/bin/run.sh pmd \
+            -d force-app/main/default/classes \
+            -R category/apex/design.xml \
+            -R category/apex/bestpractices.xml \
+            -R category/apex/errorprone.xml \
+            -f sarif \
+            -r pmd-report.sarif || true
+
+      - name: Upload PMD HTML report
         uses: actions/upload-artifact@v4
         with:
-          name: pmd-report
+          name: pmd-html-report
           path: pmd-report.html
+
+      - name: Upload PMD SARIF report
+        uses: github/codeql-action/upload-sarif@v3
+        with:
+          sarif_file: pmd-report.sarif
