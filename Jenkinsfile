@@ -68,11 +68,16 @@ pipeline {
     }
     failure {
       script {
-        if (env.CHANGE_ID) {
-          echo "❌ Validation failed for PR #${env.CHANGE_ID}"
-        } else {
-          echo "❌ Deployment failed for branch ${env.BRANCH_NAME}"
-        }
+        def msg = env.CHANGE_ID ?
+          "❌ Validation failed for PR #${env.CHANGE_ID}" :
+          "❌ Deployment failed for branch ${env.BRANCH_NAME}"
+        echo msg
+        emailext(
+          subject: "Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+          body: """<p>${msg}</p>
+                   <p>See details: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
+          to: "dheeraj.pvas@gmail.com"
+        )
       }
     }
   }
