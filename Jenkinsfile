@@ -26,7 +26,7 @@ pipeline {
               --username $SF_USERNAME \
               --instance-url https://test.salesforce.com \
               --alias myOrg
-            '''
+          '''
         }
       }
     }
@@ -35,22 +35,45 @@ pipeline {
       when { changeRequest(target: 'main') }
       steps {
         sh '''
-          echo "Running validation deploy..."
+          echo "Running validation deploy for PR #${CHANGE_ID}..."
           sf project deploy start \
             --source-dir force-app/main/default \
             --target-org $SF_USERNAME \
-            --wait 20
-          '''
+            --wait 20 \
+            --check-only
+        '''
       }
     }
   }
 
   post {
     success {
-      echo "✅ Validation successful for PR to main"
+      step([
+        $class: 'GitHubCommitStatusSetter',
+        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+        statusResultSource: [
+          $class: 'ConditionalStatusResultSource',
+          results: [[
+            $class: 'AnyBuildResult',
+            state: 'SUCCESS',
+            message: "✅ Validation successful for PR #${CHANGE_ID} into ${CHANGE_TARGET}"
+          ]]
+        ]
+      ])
     }
     failure {
-      echo "❌ Validation failed for PR to main"
+      step([
+        $class: 'GitHubCommitStatusSetter',
+        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
+        statusResultSource: [
+          $class: 'ConditionalStatusResultSource',
+          results: [[
+            $class: 'AnyBuildResult',
+            state: 'FAILURE',
+            message: "❌ Validation failed for PR #${CHANGE_ID} into ${CHANGE_TARGET}"
+          ]]
+        ]
+      ])
     }
   }
 }
