@@ -1,10 +1,10 @@
 @isTest
-public class MyDeveloperTestTest {
+public class MyDevelopTestTest {
     
 
     @isTest
     static void testGreet() {
-        MyDeveloperTest obj = new MyDeveloperTest();
+        MyDevelopTestTest obj = new MyDevelopTestTest();
         String result = obj.greet('Dheeraj');
         System.assertEquals('Hello, Dheeraj', result);
     }
