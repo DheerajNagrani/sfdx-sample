@@ -8,14 +8,12 @@ pipeline {
 
   stages {
     stage('Checkout') {
-      when { changeRequest(target: 'main') }
       steps {
         checkout scm
       }
     }
 
     stage('Authenticate Salesforce') {
-      when { changeRequest(target: 'main') }
       steps {
         withCredentials([file(credentialsId: 'SF_JWT_KEY', variable: 'JWT_KEY_FILE')]) {
           sh '''
@@ -31,49 +29,51 @@ pipeline {
       }
     }
 
-    stage('Validate Deployment') {
-      when { changeRequest(target: 'main') }
+    stage('Validate or Deploy') {
       steps {
-        sh '''
-          echo "Running validation deploy for PR #${CHANGE_ID}..."
-          sf project deploy start \
-            --source-dir force-app/main/default \
-            --target-org $SF_USERNAME \
-            --wait 20 \
-            --check-only
-        '''
+        script {
+          if (env.CHANGE_ID) {
+            echo "Running validation for PR #${env.CHANGE_ID} targeting ${env.CHANGE_TARGET}"
+            sh '''
+              sf project deploy validate \
+                --source-dir force-app/main/default \
+                --target-org $SF_USERNAME \
+                --wait 20
+            '''
+          } else if (env.BRANCH_NAME == 'main') {
+            echo "Running full deploy for main branch"
+            sh '''
+              sf project deploy start \
+                --source-dir force-app/main/default \
+                --target-org $SF_USERNAME \
+                --wait 20
+            '''
+          } else {
+            echo "Skipping deploy: not a PR or main branch."
+          }
+        }
       }
     }
   }
 
   post {
     success {
-      step([
-        $class: 'GitHubCommitStatusSetter',
-        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-        statusResultSource: [
-          $class: 'ConditionalStatusResultSource',
-          results: [[
-            $class: 'AnyBuildResult',
-            state: 'SUCCESS',
-            message: "✅ Validation successful for PR #${CHANGE_ID} into ${CHANGE_TARGET}"
-          ]]
-        ]
-      ])
+      script {
+        if (env.CHANGE_ID) {
+          echo "✅ Validation successful for PR #${env.CHANGE_ID}"
+        } else {
+          echo "✅ Deployment successful for branch ${env.BRANCH_NAME}"
+        }
+      }
     }
     failure {
-      step([
-        $class: 'GitHubCommitStatusSetter',
-        contextSource: [$class: 'ManuallyEnteredCommitContextSource', context: 'Jenkins SFDX Validation'],
-        statusResultSource: [
-          $class: 'ConditionalStatusResultSource',
-          results: [[
-            $class: 'AnyBuildResult',
-            state: 'FAILURE',
-            message: "❌ Validation failed for PR #${CHANGE_ID} into ${CHANGE_TARGET}"
-          ]]
-        ]
-      ])
+      script {
+        if (env.CHANGE_ID) {
+          echo "❌ Validation failed for PR #${env.CHANGE_ID}"
+        } else {
+          echo "❌ Deployment failed for branch ${env.BRANCH_NAME}"
+        }
+      }
     }
   }
 }
