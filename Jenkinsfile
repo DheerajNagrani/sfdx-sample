@@ -1,6 +1,11 @@
 pipeline {
   agent any
 
+  triggers {
+    // Trigger on GitHub push and PR events
+    githubPush()
+  }
+
   environment {
     SF_USERNAME  = credentials('SF_USERNAME')
     SF_CLIENT_ID = credentials('SF_CLIENT_ID')
@@ -32,7 +37,7 @@ pipeline {
     stage('Validate or Deploy') {
       steps {
         script {
-          if (env.CHANGE_ID) {
+          if (env.CHANGE_ID && (env.CHANGE_TARGET == 'main' || env.CHANGE_TARGET == 'develop')) {
             echo "Running validation for PR #${env.CHANGE_ID} targeting ${env.CHANGE_TARGET}"
             sh '''
               sf project deploy validate \
@@ -40,8 +45,8 @@ pipeline {
                 --target-org $SF_USERNAME \
                 --wait 20
             '''
-          } else if (env.BRANCH_NAME == 'main') {
-            echo "Running full deploy for main branch"
+          } else if (env.BRANCH_NAME == 'main' || env.BRANCH_NAME == 'develop') {
+            echo "Running full deploy for branch ${env.BRANCH_NAME}"
             sh '''
               sf project deploy start \
                 --source-dir force-app/main/default \
@@ -49,7 +54,7 @@ pipeline {
                 --wait 20
             '''
           } else {
-            echo "Skipping deploy: not a PR or main branch."
+            echo "Skipping deploy: not a PR to main/develop or direct run on other branches."
           }
         }
       }
@@ -67,18 +72,18 @@ pipeline {
       }
     }
     failure {
-  script {
-    def msg = 
-      "❌ Validation failed for PR #${env.CHANGE_ID}" 
-      
-    echo msg
-    emailext(
-      subject: "Jenkins Build FAILED: #${env.BUILD_NUMBER}",
-      body: """<p>${msg}</p>
-               <p>Check logs in your dashboard.</p>""",
-      to: "dheeraj.pvas@gmail.com"
-    )
-  }
-}
+      script {
+        def msg = env.CHANGE_ID ?
+          "❌ Validation failed for PR #${env.CHANGE_ID}" :
+          "❌ Deployment failed for branch ${env.BRANCH_NAME}"
+        echo msg
+        emailext(
+          subject: "Jenkins Build FAILED: #${env.BUILD_NUMBER}",
+          body: """<p>${msg}</p>
+                   <p>Check logs in your dashboard.</p>""",
+          to: "dheeraj.pvas@gmail.com"
+        )
+      }
+    }
   }
 }
