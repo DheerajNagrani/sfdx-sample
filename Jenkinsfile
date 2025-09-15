@@ -9,7 +9,6 @@ pipeline {
   environment {
     SF_USERNAME  = credentials('SF_USERNAME')
     SF_CLIENT_ID = credentials('SF_CLIENT_ID')
-    PMD_VERSION  = "7.0.0"
   }
 
   stages {
@@ -61,31 +60,28 @@ pipeline {
       }
     }
 
-    stage('Run PMD Analysis') {
-      when {
-        expression { env.CHANGE_ID || env.BRANCH_NAME == 'develop' }
-      }
+    stage('Run PMD') {
       steps {
         sh '''
-          echo "Downloading PMD..."
-          curl -L https://github.com/pmd/pmd/releases/download/pmd_releases/${PMD_VERSION}/pmd-bin-${PMD_VERSION}.zip -o pmd.zip
-          unzip -o pmd.zip -d $WORKSPACE
-          echo "Running PMD..."
-          $WORKSPACE/pmd-bin-${PMD_VERSION}/bin/pmd check \
+          echo "Downloading and running PMD..."
+          curl -L -o pmd-bin.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip
+          unzip -o pmd-bin.zip
+          ./pmd-bin-6.55.0/bin/run.sh pmd \
             -d force-app/main/default/classes \
             -R category/apex/design.xml \
             -f html \
             -r pmd-report.html
         '''
-      }
-    }
-
-    stage('Archive PMD Report') {
-      when {
-        expression { env.CHANGE_ID || env.BRANCH_NAME == 'develop' }
-      }
-      steps {
+        // Save PMD report as an artifact
         archiveArtifacts artifacts: 'pmd-report.html', fingerprint: true
+        // Publish report in Jenkins UI
+        publishHTML(target: [
+          allowMissing: true,
+          keepAll: true,
+          reportDir: '.',
+          reportFiles: 'pmd-report.html',
+          reportName: 'PMD Analysis Report'
+        ])
       }
     }
   }
