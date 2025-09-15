@@ -60,15 +60,18 @@ pipeline {
       }
     }
 
-    stage('Run PMD') {
+        stage('Run PMD') {
       steps {
         sh '''
           echo "Downloading and running PMD..."
           curl -L -o pmd-bin.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip
           unzip -o pmd-bin.zip
+
           ./pmd-bin-6.55.0/bin/run.sh pmd \
             -d force-app/main/default/classes \
             -R category/apex/design.xml \
+            -R category/apex/bestpractices.xml \
+            -R category/apex/errorprone.xml \
             -f html \
             -r pmd-report.html
 
@@ -87,6 +90,7 @@ pipeline {
         ])
       }
     }
+
   }
 
   post {
