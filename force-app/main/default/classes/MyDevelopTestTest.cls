@@ -4,7 +4,7 @@ public class MyDevelopTestTest {
 
     @isTest
     static void testGreet() {
-        MyDevelopTestTest obj = new MyDevelopTestTest();
+        MyDevelopTest obj = new MyDevelopTest();
         String result = obj.greet('Dheeraj');
         System.assertEquals('Hello, Dheeraj', result);
     }
