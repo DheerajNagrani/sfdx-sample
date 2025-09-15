@@ -9,6 +9,7 @@ pipeline {
   environment {
     SF_USERNAME  = credentials('SF_USERNAME')
     SF_CLIENT_ID = credentials('SF_CLIENT_ID')
+    PMD_VERSION  = "7.0.0"
   }
 
   stages {
@@ -57,6 +58,34 @@ pipeline {
             echo "Skipping deploy: not a PR to main/develop or direct run on other branches."
           }
         }
+      }
+    }
+
+    stage('Run PMD Analysis') {
+      when {
+        expression { env.CHANGE_ID || env.BRANCH_NAME == 'develop' }
+      }
+      steps {
+        sh '''
+          echo "Downloading PMD..."
+          curl -L https://github.com/pmd/pmd/releases/download/pmd_releases/${PMD_VERSION}/pmd-bin-${PMD_VERSION}.zip -o pmd.zip
+          unzip -o pmd.zip -d $WORKSPACE
+          echo "Running PMD..."
+          $WORKSPACE/pmd-bin-${PMD_VERSION}/bin/pmd check \
+            -d force-app/main/default/classes \
+            -R category/apex/design.xml \
+            -f html \
+            -r pmd-report.html
+        '''
+      }
+    }
+
+    stage('Archive PMD Report') {
+      when {
+        expression { env.CHANGE_ID || env.BRANCH_NAME == 'develop' }
+      }
+      steps {
+        archiveArtifacts artifacts: 'pmd-report.html', fingerprint: true
       }
     }
   }
