@@ -5,4 +5,7 @@ public with sharing class DheerajTest {
     public String greetOne(String name) {
         return 'Hello, ' + name;
     }
+    public String greetTwo(String name) {
+        return 'Hello, ' + name;
+    }
 }
