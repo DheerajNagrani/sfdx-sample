@@ -1,5 +1,5 @@
 public with sharing class TestMyApex {
-    public TestMyApex() {
-
+    public String greet(String name) {
+        return 'Hello, ' + name;
     }
 }
