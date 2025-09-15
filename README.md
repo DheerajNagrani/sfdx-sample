@@ -14,7 +14,7 @@ This repository contains a Salesforce DX project with an example Apex class and 
 - Jenkins job runs on every PR to `main`.
 - Status check (`jenkins/ci`) must pass before merging.
 
-## Notes test one pr
+## Notes test one pr test
 - Use `sfdx force:source:pull` and `sfdx force:source:push` carefully to avoid metadata conflicts.
 - Resolve conflicts by running:
   ```bash
