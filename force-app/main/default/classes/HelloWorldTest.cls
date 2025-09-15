@@ -14,4 +14,11 @@ public class HelloWorldTest {
         String result = obj.greetOne('Dheeraj');
         System.assertEquals('Hello, Dheeraj', result);
     }
+
+    @isTest
+    static void testGreetTwo() {
+        HelloWorld obj = new HelloWorld();
+        String result = obj.greetTwo('Dheeraj');
+        System.assertEquals('Hello, Dheeraj', result);
+    }
 }
