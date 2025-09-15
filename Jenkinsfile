@@ -67,17 +67,18 @@ pipeline {
       }
     }
     failure {
-      script {
-        def msg = env.CHANGE_ID ?
-          "❌ Validation failed for PR #${env.CHANGE_ID}" :
-          "❌ Deployment failed for branch ${env.BRANCH_NAME}"
-        echo msg
-        emailext(
-          subject: "Jenkins Build FAILED:  #${env.BUILD_NUMBER}",
-          body: "Your Jenkins Build Failed. Please check the logs in your dashboard.",
-          to: "dheeraj.pvas@gmail.com"
-        )
-      }
-    }
+  script {
+    def msg = env.CHANGE_ID ?
+      "❌ Validation failed for PR #${env.CHANGE_ID}" :
+      "❌ Deployment failed for branch ${env.BRANCH_NAME}"
+    echo msg
+    emailext(
+      subject: "Jenkins Build FAILED: ${env.JOB_NAME} #${env.BUILD_NUMBER}",
+      body: """<p>${msg}</p>
+               <p>Check logs here: <a href="${env.BUILD_URL}">${env.BUILD_URL}</a></p>""",
+      to: "dheeraj.pvas@gmail.com"
+    )
+  }
+}
   }
 }
