@@ -1,5 +1,5 @@
-public with sharing class testmyapex {
-    public testmyapex() {
+public with sharing class TestMyApex {
+    public TestMyApex() {
 
     }
 }
