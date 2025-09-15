@@ -14,20 +14,20 @@ jobs:
 
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      - name: Install Java
-        uses: actions/setup-java@v3
+      - name: Set up Java
+        uses: actions/setup-java@v4
         with:
-          distribution: 'temurin'
-          java-version: '11'
+          distribution: temurin
+          java-version: 17
 
-      - name: Download PMD
+      - name: Install PMD
         run: |
           curl -L -o pmd-bin.zip https://github.com/pmd/pmd/releases/download/pmd_releases%2F6.55.0/pmd-bin-6.55.0.zip
           unzip -o pmd-bin.zip
 
-      - name: Run PMD on Apex classes
+      - name: Run PMD Analysis
         run: |
           ./pmd-bin-6.55.0/bin/run.sh pmd \
             -d force-app/main/default/classes \
@@ -38,7 +38,7 @@ jobs:
             -r pmd-report.html
 
       - name: Upload PMD Report
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: pmd-report
           path: pmd-report.html
