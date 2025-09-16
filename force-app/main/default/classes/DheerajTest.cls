@@ -6,6 +6,7 @@ public with sharing class DheerajTest {
         return 'Hello, ' + name;
     }
     public String greetTwo(String name) {
-        return 'Hello, ' + name;
+        return 'Hello1, ' + name;
     }
+    
 }
