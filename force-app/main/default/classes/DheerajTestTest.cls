@@ -7,4 +7,16 @@ public class DheerajTestTest {
         String result = obj.greet('Dheeraj');
         System.assertEquals('Hello, Dheeraj', result);
     }
+    @isTest
+    static void testGreetOne() {
+        DheerajTest obj = new DheerajTest();
+        String result = obj.greetOne('Dheeraj');
+        System.assertEquals('Hello, Dheeraj', result);
+    }
+    @isTest
+    static void testGreetTwo() {
+        DheerajTest obj = new DheerajTest();
+        String result = obj.greetTwo('Dheeraj');
+        System.assertEquals('Hello1, Dheeraj', result);
+    }
 }
