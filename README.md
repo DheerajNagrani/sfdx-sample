@@ -1,37 +1,71 @@
-# SFDX Sample Project
 
-This repository contains a Salesforce DX project with an example Apex class and trigger.
+---
 
 ## Branching Strategy
-- `main`: Production-ready code. Protected, requires PR reviews & passing Jenkins build.
-- `develop`: Active development branch.
+- **`main` branch**  
+  - Production-ready code.  
+  - Protected: requires PR reviews and a passing Jenkins status check before merge.  
+
+- **`develop` branch**  
+  - Active development branch. Protected: requires PR reviews and a passing Jenkins status check before merge. 
+  - Pull requests into `develop` trigger Jenkins validation.  
+
+---
 
 ## Permissions
-- Read-only: User A
-- Write access: User B
+- **Read-only user**: Can view repo contents but cannot push or merge.  
+- **Write user**: Can create branches, raise pull requests, and push commits.  
 
-## CI/CD
-- Jenkins job runs on every PR to `main`.
-- Status check (`jenkins/ci`) must pass before merging.
+---
 
-## Notes test one pr test
-- Use `sfdx force:source:pull` and `sfdx force:source:push` carefully to avoid metadata conflicts.
-- Resolve conflicts by running:
-  ```bash
-  sfdx force:source:status
+## Jenkins Integration
+- A webhook is configured from GitHub → Jenkins.  
+- Every **push** and **pull request** triggers the Jenkins pipeline:
+  1. **Checkout** the repository.  
+  2. **Authenticate** with Salesforce via JWT.  
+  3. **Validate or deploy** metadata:
+     - Validation runs for PRs into `main` and `develop`.  
+     - Full deployment runs on direct commits to these branches.  
+  4. **PMD static analysis** runs on Apex classes, producing:
+     - An **HTML report** archived in Jenkins.  
+     - Annotations in GitHub PRs (via SARIF).  
 
-  ## Static Code Analysis with PMD
+---
 
-This project uses [PMD](https://pmd.github.io/) to analyze Apex classes.
+## Status Checks
+- GitHub branch protection enforces that **Jenkins build must pass** before merging into `main`.  
+- This ensures deployments meet Salesforce’s 75% test coverage requirement and pass static analysis.  
 
-### GitHub Actions
-- Workflow file: `.github/workflows/pmd.yml`
-- Runs on:
-  - Pull requests targeting `develop`
-  - Pushes to `develop`
-- Generates a `pmd-report.html` file as an artifact.
+---
 
-### Jenkins
-- Jenkinsfile runs PMD as part of the pipeline.
-- The PMD report is archived in Jenkins and viewable in the job’s **PMD Analysis Report** section.
+## SFDX Notes
+- Always use **`sfdx force:source:pull` / `push`** to avoid metadata conflicts.  
+- If conflicts occur:
+  - Run `sfdx force:source:status` to see pending local/remote changes.  
+  - Use `sfdx force:source:pull --forceoverwrite` if safe, or resolve manually before committing.  
+- Validate deployments before merging to `main` to avoid blocking errors in production.  
+- Use `sf project deploy validate` in PR pipelines to check for errors without deploying.
 
+---
+
+## Static Analysis (PMD)
+- PMD rulesets included:
+  - **Design**  
+  - **Best Practices**  
+  - **Error Prone**  
+- Reports:
+  - Downloadable HTML (`pmd-report.html`) in Jenkins build artifacts.  
+  - GitHub code scanning alerts via SARIF.  
+
+---
+
+## How to Contribute
+1. Create a feature branch from `develop`.  
+2. Commit and push changes.  
+3. Open a PR to `develop`.  
+4. Wait for Jenkins validation + PMD checks.  
+5. Once approved, changes can be merged.  
+
+---
+
+👉 This setup ensures **code quality**, **metadata safety**, and **controlled deployments** into Salesforce environments.
